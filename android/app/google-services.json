@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "522462075867",
+    "project_id": "winkle-c8e32",
+    "storage_bucket": "winkle-c8e32.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522462075867:android:acc76c408b7e785d81a5fe",
+        "android_client_info": {
+          "package_name": "alperen.example.todo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "522462075867-ebnun1l0b7l62o1jgj8ei3jjhsl6g1ir.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8gy5EQ6AL4ZnucX_TOpmvc6noubQR0CU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "522462075867-ebnun1l0b7l62o1jgj8ei3jjhsl6g1ir.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "522462075867-t3bqa4anrfcv6p2obpbsdkc29cduu9eu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "alperen.example.todo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

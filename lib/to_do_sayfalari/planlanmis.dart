@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'to_do.dart';
 
 class Planlanmis extends StatefulWidget {
@@ -7,21 +8,130 @@ class Planlanmis extends StatefulWidget {
 }
 
 class _PlanlanmisState extends State<Planlanmis> {
-  final _fieldController = TextEditingController();
-
   List<Todo> todos = [];
 
   String newTodo = '';
   String editTodo = '';
+  DateTime selectedDate = DateTime.now();
+  TimeOfDay selectedTime = TimeOfDay.now();
 
-  void addTodo(int index) {
-    setState(() {
-      todos.add(Todo(
-        title: newTodo,
-        isDone: false,
-      ));
-      newTodo = '';
-    });
+  void addTodo() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Yeni Görev Ekle'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  TextFormField(
+                    onChanged: (value) {
+                      newTodo = value;
+                    },
+                    decoration: InputDecoration(hintText: 'Görev adı girin'),
+                  ),
+                  SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2015, 8),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null && picked != selectedDate)
+                        setState(() {
+                          selectedDate = picked;
+                        });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        DateFormat('dd/MM/yyyy').format(selectedDate),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                      );
+                      if (picked != null && picked != selectedTime)
+                        setState(() {
+                          selectedTime = picked;
+                        });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        selectedTime.format(context),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  this.setState(() {
+                    todos.add(
+                      Todo(
+                        title: newTodo,
+                        date: selectedDate,
+                        time: selectedTime,
+                        isDone: false,
+                      ),
+                    );
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: Text('Ekle'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  void _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2015, 8),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+      });
+  }
+
+  void _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime,
+    );
+    if (picked != null && picked != selectedTime)
+      setState(() {
+        selectedTime = picked;
+      });
   }
 
   void deleteTodo(int index) {
@@ -31,41 +141,107 @@ class _PlanlanmisState extends State<Planlanmis> {
   }
 
   void editTodoDialog(int index) {
+    DateTime selectedDate = todos[index].date!;
+    TimeOfDay selectedTime = todos[index].time!;
+    String editTodo = todos[index].title;
+
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            shape: BeveledRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            title: Text('Düzenle'),
-            content: TextFormField(
-              initialValue: todos[index].title,
-              onChanged: (value) {
-                setState(() {
-                  editTodo = value;
-                });
-              },
+            title: Text('Görevi Düzenle'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  TextFormField(
+                    initialValue: todos[index].title,
+                    onChanged: (value) {
+                      editTodo = value;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2015, 8),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null && picked != selectedDate)
+                        setState(() {
+                          selectedDate = picked;
+                        });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        DateFormat('dd/MM/yyyy').format(selectedDate),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                      );
+                      if (picked != null && picked != selectedTime)
+                        setState(() {
+                          selectedTime = picked;
+                        });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        selectedTime.format(context),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             actions: [
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                ),
-                child: Text('Kaydet'),
                 onPressed: () {
-                  editTodoItem(index, editTodo);
-                  Navigator.pop(context);
+                  this.setState(() {
+                    todos[index] = Todo(
+                      title: editTodo,
+                      date: selectedDate,
+                      time: selectedTime,
+                      isDone: todos[index].isDone,
+                    );
+                  });
+                  Navigator.of(context).pop();
                 },
+                child: Text('Düzenle'),
               ),
             ],
           );
         });
+      },
+    );
   }
 
   void editTodoItem(int index, String newTitle) {
     setState(() {
       todos[index].title = newTitle;
+      todos[index].date = selectedDate;
+      todos[index].time = selectedTime;
     });
   }
 
@@ -108,16 +284,42 @@ class _PlanlanmisState extends State<Planlanmis> {
                         toggleDone(index);
                       },
                     ),
-                    title: Text(
-                      todos[index].title,
-                      style: TextStyle(
-                        decoration: todos[index].isDone
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
+                    title: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: todos[index].title + '\n',
+                            style: TextStyle(
+                              color: Colors.red, // Title text color
+                              fontSize: 20.0, // Title text size
+                              decoration: todos[index].isDone
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                            ),
+                          ),
+                          TextSpan(
+                            text: (todos[index].date != null
+                                ? DateFormat('dd/MM/yyyy').format(todos[index].date!)
+                                : '') +
+                                ' - ' +
+                                (todos[index].time != null
+                                    ? todos[index].time!.format(context)
+                                    : ''),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 15.0,
+                              decoration: todos[index].isDone
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
                           icon: Icon(Icons.edit),
@@ -137,36 +339,14 @@ class _PlanlanmisState extends State<Planlanmis> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _fieldController,
-                      decoration: InputDecoration(
-                        hintText: 'Bir Görev Ekle',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          newTodo = value;
-                        });
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: () {
-                      _fieldController.clear();
-                      addTodo(0);
-                    },
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          addTodo();
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
