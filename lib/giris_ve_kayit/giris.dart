@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todo/login/hesap_olusturma.dart';
+import 'package:todo/giris_ve_kayit/hesap_olusturma.dart';
 import '../ana_sayfa.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -157,7 +157,7 @@ class _GirisState extends State<Giris> {
                 ),
               ],
             ),
-            SizedBox(height: 25),
+            SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,

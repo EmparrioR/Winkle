@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
-import 'habit_detail_page.dart';
+import 'aliskanlik_detay_sayfasi.dart';
+import 'ate_db_helper.dart';
 
 class Aliskanlik_Takip_Edici extends StatefulWidget {
   @override
@@ -11,12 +13,30 @@ class Aliskanlik_Takip_Edici extends StatefulWidget {
 class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
   List<Habit> habits = [];
 
+  @override
+  void initState() {
+    super.initState();
+    loadHabits();
+  }
+
+  Future<void> loadHabits() async {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    List<Map<String, dynamic>> rawHabits =
+        await DatabaseHelper.instance.queryAllRows(currentUserId);
+    habits = rawHabits.map((habitMap) => Habit.fromMap(habitMap)).toList();
+    setState(() {});
+  }
+
   Future<void> _showEditHabitDialog(int index) async {
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+
     // Mevcut habit bilgilerini alır.
     Habit currentHabit = habits[index];
-    TextEditingController _habitNameController = TextEditingController(text: currentHabit.name);
+    TextEditingController _habitNameController =
+        TextEditingController(text: currentHabit.name);
     DateTime _startDate = currentHabit.startDate;
     Color _color = currentHabit.color;
+    final user = FirebaseAuth.instance.currentUser;
 
     final result = await showDialog<Habit>(
       context: context,
@@ -31,7 +51,7 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                     TextField(
                       controller: _habitNameController,
                       decoration:
-                      InputDecoration(labelText: 'Alışkanlık Adını Yazın'),
+                          InputDecoration(labelText: 'Alışkanlık Adını Yazın'),
                     ),
                     SizedBox(height: 16),
                     GestureDetector(
@@ -65,28 +85,28 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                     GestureDetector(
                       onTap: () async {
                         _color = await showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              titlePadding: const EdgeInsets.all(0),
-                              content: SingleChildScrollView(
-                                child: ColorPicker(
-                                  color: _color,
-                                  onColorChanged: (Color color) =>
-                                  _color = color,
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 22,
-                                  spacing: 0,
-                                  runSpacing: 0,
-                                  wheelDiameter: 165,
-                                  enableOpacity: true,
-                                  colorCodeHasColor: true,
-                                ),
-                              ),
-                            );
-                          },
-                        ) ??
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  titlePadding: const EdgeInsets.all(0),
+                                  content: SingleChildScrollView(
+                                    child: ColorPicker(
+                                      color: _color,
+                                      onColorChanged: (Color color) =>
+                                          _color = color,
+                                      width: 44,
+                                      height: 44,
+                                      borderRadius: 22,
+                                      spacing: 0,
+                                      runSpacing: 0,
+                                      wheelDiameter: 165,
+                                      enableOpacity: true,
+                                      colorCodeHasColor: true,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ) ??
                             _color;
                         setState(() {});
                       },
@@ -116,10 +136,21 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                 TextButton(
                   child: Text('Düzenle'),
                   onPressed: () {
-                    if (_habitNameController.text.isNotEmpty && _startDate != null) {
-                      Navigator.of(context).pop(
-                        Habit(_habitNameController.text, _startDate, _color),
-                      );
+                    if (_habitNameController.text.isNotEmpty &&
+                        _startDate != null) {
+                      final User? currentUser =
+                          FirebaseAuth.instance.currentUser;
+                      if (currentUser != null) {
+                        Navigator.of(context).pop(
+                          Habit(
+                            id: currentHabit.id,
+                            name: _habitNameController.text,
+                            startDate: _startDate!,
+                            color: _color,
+                            userId: currentUser.uid,
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
@@ -131,14 +162,13 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
     );
 
     if (result != null) {
-      setState(() {
-        habits[index] = result;  // Düzenlenen habit'i günceller
-      });
+      await DatabaseHelper.instance.update(result.toMap());
+      loadHabits();
     }
   }
 
-
   Future<void> _showAddHabitDialog() async {
+    final User? currentUser = FirebaseAuth.instance.currentUser;
     TextEditingController _habitNameController = TextEditingController();
     DateTime _startDate = DateTime.now();
     Color _color = Colors.blue; // Default color
@@ -243,8 +273,18 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                   onPressed: () {
                     if (_habitNameController.text.isNotEmpty &&
                         _startDate != null) {
-                      Navigator.of(context).pop(
-                          Habit(_habitNameController.text, _startDate, _color));
+                      final User? currentUser =
+                          FirebaseAuth.instance.currentUser;
+                      if (currentUser != null) {
+                        Navigator.of(context).pop(
+                          Habit(
+                            name: _habitNameController.text,
+                            startDate: _startDate!,
+                            color: _color,
+                            userId: currentUser.uid,
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
@@ -256,29 +296,49 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
     );
 
     if (result != null) {
-      setState(() {
-        habits.add(result);
-      });
+      await DatabaseHelper.instance.insert(result.toMap());
+      loadHabits();
     }
   }
 
-  void _removeHabit(int index) {
-    setState(() {
-      Habit removedHabit = habits.removeAt(index);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${removedHabit.name} silindi'),
-          action: SnackBarAction(
-            label: 'Geri Al',
-            onPressed: () {
-              setState(() {
-                habits.insert(index, removedHabit);
-              });
-            },
-          ),
+  void _removeHabit(int index) async {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    Habit removedHabit = habits.removeAt(index);
+    if (removedHabit.id != null) {
+      await DatabaseHelper.instance.delete(removedHabit.id!, currentUserId);
+    }
+    loadHabits();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removedHabit.name} silindi'),
+        action: SnackBarAction(
+          label: 'Geri Al',
+          onPressed: () async {
+            await DatabaseHelper.instance.insert(removedHabit.toMap());
+            loadHabits();
+          },
         ),
-      );
-    });
+      ),
+    );
+  }
+
+  Route createRoute(Widget page) {
+    return PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var begin = Offset(1.0, 0.0);
+          var end = Offset.zero;
+          var curve = Curves.ease;
+
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: Duration(milliseconds: 1000));
   }
 
   @override
@@ -311,29 +371,27 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                               }
                             },
                             background: Container(
-                              color: Colors.green,
                               alignment: Alignment.centerLeft,
                               padding: EdgeInsets.only(left: 20),
-                              child: Icon(Icons.edit, color: Colors.white),
+                              child: Icon(Icons.edit, color: Colors.green),
                             ),
                             secondaryBackground: Container(
-                              color: Colors.red,
                               alignment: Alignment.centerRight,
                               padding: EdgeInsets.only(right: 20),
-                              child: Icon(Icons.delete, color: Colors.white),
+                              child: Icon(Icons.delete, color: Colors.red),
                             ),
                             direction: DismissDirection.horizontal,
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          HabitDetailPage(habit, color)),
+                                  createRoute(HabitDetailPage(habit, color)),
                                 );
                               },
                               child: Container(
-                                color: color,
+                                decoration: BoxDecoration(
+                                    color: color,
+                                    borderRadius: BorderRadius.circular(15)),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Row(
@@ -364,7 +422,7 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
                                     ],
                                   ),
                                 ),
-                              ), // Your existing Container widget
+                              ),
                             )),
                       );
                     },
@@ -381,9 +439,34 @@ class _Aliskanlik_Takip_EdiciState extends State<Aliskanlik_Takip_Edici> {
 }
 
 class Habit {
+  int? id;
   String name;
   DateTime startDate;
   Color color;
+  String userId;
 
-  Habit(this.name, this.startDate, this.color);
+  Habit({
+    this.id,
+    required this.name,
+    required this.startDate,
+    required this.color,
+    required this.userId,
+  });
+
+  Habit.fromMap(Map<String, dynamic> map)
+      : id = map[DatabaseHelper.columnId],
+        name = map[DatabaseHelper.columnName],
+        startDate = DateTime.parse(map[DatabaseHelper.columnDateTime]),
+        color = Color(map[DatabaseHelper.columnColor]),
+        userId = map[DatabaseHelper.columnUserId];
+
+  Map<String, dynamic> toMap() {
+    return {
+      DatabaseHelper.columnId: id,
+      DatabaseHelper.columnName: name,
+      DatabaseHelper.columnDateTime: startDate.toIso8601String(),
+      DatabaseHelper.columnColor: color.value,
+      DatabaseHelper.columnUserId: userId,
+    };
+  }
 }

@@ -10,6 +10,9 @@ class Ayarlar extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Ayarlar"),
+        backgroundColor: Colors.black,
+        elevation: 0,
+
       ),
       body: ListView(children: <Widget>[
         SwitchListTile(

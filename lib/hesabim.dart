@@ -5,7 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'login/giris.dart';
+import 'giris_ve_kayit/giris.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Hesabim extends StatefulWidget {
   const Hesabim({Key? key}) : super(key: key);
@@ -19,7 +20,6 @@ class _HesabimState extends State<Hesabim> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Future<DocumentSnapshot<Map<String, dynamic>>> futureUserData;
   Uint8List? imageBytes;
-  String? _downloadURL;
 
   @override
   void initState() {
@@ -27,11 +27,12 @@ class _HesabimState extends State<Hesabim> {
     futureUserData = _fetchUserInfo();
   }
 
+
   Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserInfo() async {
     User? user = _auth.currentUser;
     if (user != null) {
       DocumentSnapshot<Map<String, dynamic>> snapshot =
-      await _firestore.collection('Users').doc(user.uid).get();
+          await _firestore.collection('Users').doc(user.uid).get();
       return snapshot;
     } else {
       throw Exception('No user is currently signed in.');
@@ -39,7 +40,9 @@ class _HesabimState extends State<Hesabim> {
   }
 
   Future pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -54,7 +57,8 @@ class _HesabimState extends State<Hesabim> {
   Future uploadFile() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore.collection('Users').doc(user.uid).get();
+      DocumentSnapshot<Map<String, dynamic>> snapshot =
+          await _firestore.collection('Users').doc(user.uid).get();
       Map<String, dynamic> data = snapshot.data()!;
       String? oldPhotoReference = data['photoReference'];
 
@@ -69,25 +73,27 @@ class _HesabimState extends State<Hesabim> {
       }
 
       // Upload the new file
-      String fileName = 'profilePic_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      Reference storageReference = FirebaseStorage.instance
-          .ref()
-          .child('profile/${user.uid}/$fileName');
+      String fileName =
+          'profilePic_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference storageReference =
+          FirebaseStorage.instance.ref().child('profile/${user.uid}/$fileName');
 
-      UploadTask uploadTask = storageReference.putData(imageBytes!);
-      await uploadTask.whenComplete(() => null);
+      if (imageBytes != null) {
+        UploadTask uploadTask = storageReference.putData(imageBytes!);
+        await uploadTask.whenComplete(() => null);
 
-      String downloadURL = await storageReference.getDownloadURL();
-
-      setState(() {
-        _downloadURL = downloadURL;
+        String downloadURL = await storageReference.getDownloadURL();
 
         // Update user data in Firestore
-        _firestore.collection('Users').doc(user.uid).update({
-          'photoUrl': _downloadURL,
+        await _firestore.collection('Users').doc(user.uid).update({
+          'photoUrl': downloadURL,
           'photoReference': 'profile/${user.uid}/$fileName'
         });
-      });
+
+        if (mounted) {
+          setState(() {});
+        }
+      }
     }
   }
 
@@ -104,87 +110,163 @@ class _HesabimState extends State<Hesabim> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.orange,
       body: Center(
-        child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          future: futureUserData,
-          builder: (BuildContext context,
-              AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator(); // loading spinner
-            } else if (snapshot.hasError) {
-              return Text('Something went wrong :(');
-            } else {
-              var data = snapshot.data!.data()!;
-              var username = data['username'];
-              var email = data['email'];
-              var photoUrl = (_auth.currentUser?.photoURL ?? data['photoUrl']) as String?;
+        child: Container(
+          margin: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(30)),
+          child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            future: futureUserData,
+            builder: (BuildContext context,
+                AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>>
+                    snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // loading spinner
+              } else if (snapshot.hasError) {
+                return Text('Something went wrong :(');
+              } else if (snapshot.hasData && snapshot.data!.data() != null) {
+                var data = snapshot.data!.data()!;
+                var username = data['username'] as String?;
+                var email = data['email'] as String?;
+                var photoUrl = (_auth.currentUser?.photoURL ?? data['photoUrl'])
+                    as String?;
 
-              return Column(
-                children: [
-                  SizedBox(height: 50.0),
-                  GestureDetector(
-                    onTap: () {
-                      pickImage();
-                    },
-                    child: CircleAvatar(
-                      radius: 100.0,
-                      backgroundColor: Colors.white,
-                      backgroundImage: _loadImage(photoUrl, imageBytes),
+                return Column(
+                  children: [
+                    SizedBox(height: 50.0),
+                    GestureDetector(
+                      onTap: () {
+                        pickImage();
+                      },
+                      child: CircleAvatar(
+                        radius: 100.0,
+                        backgroundColor: Colors.white,
+                        backgroundImage: _loadImage(photoUrl, imageBytes),
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    height: 15.0,
-                  ),
-                  Text(
-                    username,
-                    style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    height: 5.0,
-                  ),
-                  Text(
-                    email,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.grey[600],
+                    SizedBox(
+                      height: 15.0,
                     ),
-                  ),
-                  SizedBox(height: 160.0),
-                  TextButton(
-                    onPressed: null,
-                    child: Text("Hesap Ekle",
-                        style: TextStyle(color: Colors.red, fontSize: 15)),
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.only(left: 20.0, right: 20.0),
-                            child: Divider(
-                              color: Colors.black,
-                              height: 15,
-                            ),
-                          ))
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      try {
-                        await _auth.signOut();
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => Giris()),
+                    Text(
+                      username ?? 'No username',
+                      style: TextStyle(
+                          fontSize: 22.0, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    SizedBox(
+                      height: 5.0,
+                    ),
+                    Text(
+                      email ?? 'No email',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 160.0),
+                    TextButton(
+                      onPressed: () async {
+                        try {
+                          await _auth.signOut();
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (context) => Giris()),
+                          );
+                        } catch (e) {
+                          print('Error signing out: $e');
+                        }
+                      },
+                      child: Text("Çıkış Yap",
+                          style: TextStyle(color: Colors.red, fontSize: 15)),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                            child: Container(
+                          margin:
+                              const EdgeInsets.only(left: 20.0, right: 20.0),
+                          child: Divider(
+                            color: Colors.black,
+                            height: 15,
+                          ),
+                        ))
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(
+                                  "Hesabınızı Silmek İstediğinizden Emin Misiniz ?"),
+                              actions: [
+                                TextButton(
+                                  child: Text("İptal Et"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text("Evet"),
+                                  onPressed: () async {
+                                    try {
+                                      User? user = _auth.currentUser;
+                                      if (user != null) {
+                                        // Firestore'dan kullanıcının bilgilerini alma
+                                        DocumentSnapshot<Map<String, dynamic>>
+                                            snapshot = await _firestore
+                                                .collection('Users')
+                                                .doc(user.uid)
+                                                .get();
+                                        Map<String, dynamic> data =
+                                            snapshot.data()!;
+
+                                        // Firebase Storage'dan kullanıcının tüm dosyalarını silme
+                                        ListResult result =
+                                            await FirebaseStorage.instance
+                                                .ref('profile/${user.uid}')
+                                                .listAll();
+                                        for (Reference ref in result.items) {
+                                          await ref.delete();
+                                        }
+
+                                        // Firestore'dan kullanıcının bilgilerini silme
+                                        await _firestore
+                                            .collection('Users')
+                                            .doc(user.uid)
+                                            .delete();
+
+                                        // FirebaseAuth'dan kullanıcının hesabını silme
+                                        User? currentUser = FirebaseAuth.instance.currentUser;
+                                        if (currentUser != null) {
+                                          await currentUser.delete();
+                                        }
+                                        // Yönlendirme
+                                        Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                              builder: (context) => Giris()),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      print('Error deleting account: $e');
+                                    }
+                                  },
+                                ),
+                              ],
+                            );
+                          },
                         );
-                      } catch (e) {
-                        print('Error signing out: $e');
-                      }
-                    },
-                    child: Text("Çıkış Yap",
-                        style: TextStyle(color: Colors.red, fontSize: 15)),
-                  ),
-                ],
-              );
-            }
-          },
+                      },
+                      child: Text("Hesap Sil",
+                          style: TextStyle(color: Colors.red, fontSize: 15)),
+                    ),
+                  ],
+                );
+              } else {
+                return Text('Unexpected state: ${snapshot.connectionState}');
+              }
+            },
+          ),
         ),
       ),
     );

@@ -1,10 +1,8 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:todo/login/giris.dart';
+import 'package:todo/giris_ve_kayit/giris.dart';
 
 class HesapOlusturma extends StatefulWidget {
   const HesapOlusturma({Key? key}) : super(key: key);
@@ -145,6 +143,12 @@ class _HesapOlusturmaState extends State<HesapOlusturma> {
                           padding: EdgeInsets.all(24.0),
                           child: Column(
                             children: <Widget>[
+                              Text(
+                                "Hoş geldiniz",
+                                style: TextStyle(
+                                    fontSize: 30, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 75),
                               TextField(
                                 controller: _emailController,
                                 decoration: const InputDecoration(
@@ -170,11 +174,7 @@ class _HesapOlusturmaState extends State<HesapOlusturma> {
                                 obscureText: true,
                               ),
                               SizedBox(height: 25),
-                              FloatingActionButton(
-                                child: const Text(
-                                  '➡️',
-                                  style: TextStyle(fontSize: 30.0),
-                                ),
+                              ElevatedButton(
                                 onPressed: () {
                                   signUp(
                                     _emailController.text,
@@ -182,6 +182,16 @@ class _HesapOlusturmaState extends State<HesapOlusturma> {
                                     _usernameController.text,
                                   );
                                 },
+                                child: Text('Hesap Oluştur'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 30),
+                                  textStyle: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),

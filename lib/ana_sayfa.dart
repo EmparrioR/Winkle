@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:todo/notlarim.dart';
+import 'package:todo/notlarim/notlarim.dart';
 import 'package:todo/ayarlar/ayarlar_ana_sayfa.dart';
 import 'package:todo/hesabim.dart';
-import 'to_do_sayfalari/planlanmis.dart';
+import 'to_do_sayfalari/planlanmis/planlanmis.dart';
+
 import 'to_do_sayfalari/bugun.dart';
 import 'to_do_sayfalari/gorevler.dart';
 import 'to_do_sayfalari/rutinlerim.dart';
 import 'to_do_sayfalari/onemli.dart';
 import 'package:todo/ate_sayfalari/aliskanlik_takip_edici.dart';
+import 'adim_sayar/adim_sayar.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({Key? key}) : super(key: key);
@@ -19,11 +21,36 @@ class AnaSayfa extends StatefulWidget {
 class _AnaSayfaState extends State<AnaSayfa> {
   int _selectedIndex = 0;
   final _pageController = PageController();
-
-  List<String> pageTitles = ["Winkle", "Notlarım", "ATE", "Hesabım"];
+  List<String> pageTitles = [
+    "Winkle",
+    "Notlarım",
+    "Adım Sayar",
+    "ATE",
+    "Hesabım"
+  ];
 
   void _onItemTapped(int index) {
     _pageController.jumpToPage(index);
+  }
+
+  Route createRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = Offset(1.0, 0.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+      transitionDuration: Duration(milliseconds: 1000),
+    );
   }
 
   @override
@@ -31,20 +58,22 @@ class _AnaSayfaState extends State<AnaSayfa> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         actions: <Widget>[
           IconButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => Ayarlar()));
-              },
-              icon: Icon(
-                Icons.settings,
-                color: Colors.white,
-              )),
+            onPressed: () {
+              Navigator.push(context, createRoute(Ayarlar()));
+            },
+            icon: Icon(
+              Icons.settings,
+              color: Theme.of(context).unselectedWidgetColor,
+            ),
+          ),
         ],
         title: Text(
           pageTitles[_selectedIndex],
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).unselectedWidgetColor),
         ),
       ),
       body: PageView(
@@ -56,81 +85,33 @@ class _AnaSayfaState extends State<AnaSayfa> {
         },
         children: <Widget>[
           Container(
+            decoration: BoxDecoration(
+              color: Colors.green
+            ),
             alignment: Alignment.center,
             child: ListView(
-              children: [
-                SizedBox(
-                  height: 10,
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (context) => Bugun()));
-                  },
-                  child: Container(
-                    child: Text(
-                      "☀ Bugün",
-                      style: TextStyle(fontSize: 24.0, color: Colors.green),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (context) => Onemli()));
-                  },
-                  child: Container(
-                    child: Text(
-                      "⭐ Önemli",
-                      style: TextStyle(fontSize: 24.0, color: Colors.red),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => Planlanmis()));
-                  },
-                  child: Container(
-                    child: Text(
-                      "🛩️ Planlanmış",
-                      style: TextStyle(fontSize: 24.0, color: Colors.blue),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => Gorevler()));
-                  },
-                  child: Container(
-                    child: Text(
-                      "🧾 Görevler",
-                      style: TextStyle(fontSize: 24.0, color: Colors.purple),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => Rutinlerim()));
-                  },
-                  child: Container(
-                    child: Text(
-                      "🧘‍♂ Rutinlerim",
-                      style: TextStyle(fontSize: 24.0, color: Colors.orange),
-                    ),
-                    padding: EdgeInsets.all(10),
-                  ),
-                ),
+              padding: EdgeInsets.all(8),
+              children: <Widget>[
+                buildCard("☀ Bugün", Colors.green, () {
+                  Navigator.push(context, createRoute(Bugun()));
+                }),
+                buildCard("⭐ Önemli", Colors.red, () {
+                  Navigator.push(context, createRoute(Onemli()));
+                }),
+                buildCard("🛩️ Planlanmış", Colors.blue, () {
+                  Navigator.push(context, createRoute(Planlanmis()));
+                }),
+                buildCard("🧾 Görevler", Colors.purple, () {
+                  Navigator.push(context, createRoute(Gorevler()));
+                }),
+                buildCard("🧘‍♂ Rutinlerim", Colors.orange, () {
+                  Navigator.push(context, createRoute(Rutinlerim()));
+                }),
               ],
             ),
           ),
           Notlarim(),
+          AdimSayar(),
           Aliskanlik_Takip_Edici(),
           Hesabim(),
         ],
@@ -142,7 +123,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
           BottomNavigationBarItem(
               icon: Icon(Icons.edit_note_sharp), label: 'Notlarım'),
-          BottomNavigationBarItem(icon: Icon(Icons.accessibility), label: 'ATE'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.directions_run), label: 'Adım Sayar'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.accessibility), label: 'ATE'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hesabım'),
         ],
         currentIndex: _selectedIndex,
@@ -151,6 +135,29 @@ class _AnaSayfaState extends State<AnaSayfa> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Theme.of(context).unselectedWidgetColor,
         onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Card buildCard(String text, Color color, VoidCallback onTap) {
+    return Card(
+      margin: EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      elevation: 4,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+
+          ),
+          padding: EdgeInsets.all(30),
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 24.0, color: color),
+          ),
+        ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Note_Yazma_Sayfasi extends StatefulWidget {
-  final String? note;
+  final Map<String, dynamic>? note;
 
   Note_Yazma_Sayfasi({this.note});
 
@@ -16,7 +16,7 @@ class _Note_Yazma_SayfasiState extends State<Note_Yazma_Sayfasi> {
   void initState() {
     super.initState();
 
-    String note = widget.note ?? '';
+    String note = widget.note?['note'] ?? '';
     _textEditingController = TextEditingController(text: note);
   }
 
