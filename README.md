@@ -1,5 +1,5 @@
 HEAD
-# 3301456_193301100
+# Winkle
 Flutter ile geliştirilmiş 'Winkle' isimli kişisel asistan uygulaması
 
 # todo
